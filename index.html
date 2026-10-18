@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#04060d">
+<title>Centro de Control · Clave final</title>
+<style>
+  :root{
+    --bg:#04060d; --panel:rgba(12,18,38,.8); --line:rgba(120,175,255,.32);
+    --txt:#e8f0ff; --dim:#8da2cc; --accent:#5ec8ff; --ok:#3dffa0; --bad:#ff4d6a;
+    --gap:clamp(4px,1.3dvh,14px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  html{height:100%;background:var(--bg)}
+  body{
+    min-height:100vh;min-height:100dvh;
+    background:radial-gradient(ellipse at 50% 130%,#1a2a5e 0%,#0a1230 40%,var(--bg) 75%) fixed;
+    color:var(--txt);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    display:flex;                      /* la tarjeta se centra con margin:auto: nunca se corta arriba */
+    padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right))
+            max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+    overflow-x:hidden;overflow-y:auto;
+  }
+  canvas#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+  /* Decoración */
+  .planet{position:fixed;z-index:0;pointer-events:none;
+    right:calc(-1 * clamp(60px,13vw,200px));bottom:calc(-1 * clamp(60px,13vw,200px));
+    width:clamp(160px,32vw,440px);aspect-ratio:1;border-radius:50%;
+    background:
+      radial-gradient(circle at 28% 28%,rgba(255,255,255,.25),transparent 35%),
+      repeating-linear-gradient(8deg,transparent 0 14px,rgba(80,20,5,.18) 14px 22px),
+      radial-gradient(circle at 35% 30%,#ffb177,#c4502a 55%,#4a1408 100%);
+    box-shadow:0 0 90px rgba(255,120,60,.25),inset -30px -30px 80px rgba(0,0,0,.55);
+    animation:float 9s ease-in-out infinite}
+  .moon{position:fixed;z-index:0;pointer-events:none;
+    left:clamp(6px,5vw,90px);top:clamp(6px,5dvh,100px);
+    width:clamp(36px,7vw,100px);aspect-ratio:1;border-radius:50%;
+    background:
+      radial-gradient(circle at 30% 35%,rgba(0,0,0,.18) 0 12%,transparent 13%),
+      radial-gradient(circle at 65% 60%,rgba(0,0,0,.15) 0 9%,transparent 10%),
+      radial-gradient(circle at 40% 75%,rgba(0,0,0,.12) 0 7%,transparent 8%),
+      radial-gradient(circle at 35% 30%,#f4f6fb,#a9b2c6 70%,#5c6478);
+    box-shadow:0 0 36px rgba(200,215,255,.25),inset -8px -8px 22px rgba(0,0,0,.4);
+    animation:float 11s ease-in-out infinite reverse}
+  @keyframes float{50%{transform:translateY(-12px)}}
+  .orbit{position:fixed;z-index:0;pointer-events:none;left:50%;top:50%;
+    width:min(135vw,1100px);aspect-ratio:1;translate:-50% -50%;
+    border:1px dashed rgba(120,175,255,.14);border-radius:50%;animation:spin 50s linear infinite}
+  .orbit::after{content:"";position:absolute;top:-5px;left:50%;width:10px;height:10px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 14px var(--accent)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Tarjeta */
+  .card{
+    position:relative;z-index:2;margin:auto;width:min(460px,100%);
+    padding:clamp(12px,2.4dvh,30px) clamp(14px,4vw,30px);
+    background:var(--panel);border:1px solid var(--line);border-radius:clamp(16px,3vw,26px);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 20px 70px rgba(0,0,0,.55),0 0 50px rgba(60,120,255,.14);
+    text-align:center;transition:border-color .3s,box-shadow .3s;
+  }
+  .layout{display:flex;flex-direction:column;align-items:center;gap:var(--gap)}
+  .head,.ctrl{display:contents}
+
+  .tag{font-size:clamp(.6rem,1.5dvh,.72rem);letter-spacing:.36em;color:var(--accent);text-transform:uppercase;
+    display:flex;align-items:center;gap:.7em;justify-content:center}
+  .tag i{width:.6em;height:.6em;border-radius:50%;background:var(--accent);animation:blink 1.4s infinite}
+  @keyframes blink{50%{opacity:.2}}
+
+  /* Cohete */
+  .stage{position:relative;height:clamp(54px,12dvh,120px);aspect-ratio:100/170}
+  .rocket{width:100%;height:100%;overflow:visible;animation:hover 3s ease-in-out infinite;
+    filter:drop-shadow(0 6px 14px rgba(94,200,255,.35))}
+  @keyframes hover{50%{transform:translateY(-4px) rotate(1.2deg)}}
+  .flame{transform-origin:50px 128px;animation:flick .12s infinite alternate}
+  @keyframes flick{from{transform:scaleY(.85) scaleX(.95)}to{transform:scaleY(1.15) scaleX(1.05)}}
+  .stage.launch .rocket{animation:none;transition:transform 2.6s cubic-bezier(.55,0,.95,.35),opacity 2.6s ease-in;
+    transform:translateY(-140dvh) scale(1.35);opacity:0}
+  .stage.launch .flame{animation-duration:.05s;transform:scaleY(2)}
+  .stage.back .rocket{transition:none;animation:hover 3s ease-in-out infinite}
+
+  h1{font-size:clamp(1.1rem,3.3dvh,1.6rem);letter-spacing:.05em;line-height:1.15}
+  p.sub{font-size:clamp(.72rem,1.9dvh,.9rem);color:var(--dim);max-width:34ch;line-height:1.35}
+
+  /* Casilleros */
+  .code{display:flex;gap:clamp(6px,2vw,12px);justify-content:center;width:100%}
+  .code input{
+    width:clamp(38px,min(13vw,9dvh),60px);height:clamp(44px,7.2dvh,66px);
+    text-align:center;font-size:clamp(1.3rem,3.6dvh,1.9rem);font-weight:700;
+    background:rgba(4,9,24,.85);color:var(--txt);border:1px solid var(--line);border-radius:12px;outline:none;
+    font-family:ui-monospace,Consolas,monospace;caret-color:transparent;transition:.2s;
+    -webkit-user-select:text;user-select:text;padding:0;
+  }
+  .code input:focus{border-color:var(--accent);box-shadow:0 0 16px rgba(94,200,255,.5);transform:translateY(-2px)}
+  .code input:not(:placeholder-shown){border-color:rgba(94,200,255,.6)}
+
+  /* Teclado en pantalla */
+  .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(5px,1.1dvh,10px);width:min(100%,280px)}
+  .keys button{
+    height:clamp(36px,6dvh,54px);font-size:clamp(1rem,2.6dvh,1.2rem);border-radius:12px;
+    border:1px solid var(--line);background:rgba(30,45,95,.5);color:var(--txt);cursor:pointer;
+    font-family:inherit;transition:background .15s,transform .08s,border-color .15s;touch-action:manipulation}
+  .keys button:hover{background:rgba(70,105,190,.65);border-color:var(--accent)}
+  .keys button:active{transform:scale(.93);background:rgba(94,200,255,.35)}
+  .keys .util{color:var(--dim)}
+
+  .go-btn{
+    width:min(100%,280px);height:clamp(40px,6.2dvh,54px);font-size:clamp(.85rem,2.2dvh,1.05rem);
+    font-weight:800;letter-spacing:.25em;border:none;border-radius:12px;cursor:pointer;color:#02121f;
+    font-family:inherit;background:linear-gradient(90deg,#2a7cf0,#5ec8ff 60%,#9be4ff);
+    box-shadow:0 8px 24px rgba(60,160,255,.35);transition:transform .1s,box-shadow .2s;touch-action:manipulation}
+  .go-btn:active{transform:scale(.97)}
+
+  .msg{min-height:clamp(30px,5dvh,52px);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:clamp(1.05rem,3dvh,1.5rem);font-weight:800;letter-spacing:.16em;text-transform:uppercase;line-height:1.1}
+  .msg.ok{color:var(--ok);text-shadow:0 0 18px var(--ok)}
+  .msg.bad{color:var(--bad);text-shadow:0 0 18px var(--bad)}
+  .msg small{font-size:.42em;letter-spacing:.28em;color:var(--dim);font-weight:500;margin-top:.5em}
+
+  .card.ok{border-color:var(--ok);box-shadow:0 20px 70px rgba(0,0,0,.55),0 0 70px rgba(61,255,160,.35)}
+  .card.bad{border-color:var(--bad);box-shadow:0 20px 70px rgba(0,0,0,.55),0 0 70px rgba(255,77,106,.3)}
+  .shake{animation:shake .45s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+
+  /* Pantallas bajas: se oculta lo decorativo para que entre todo */
+  @media (max-height:700px){ .tag{display:none} .stage{height:clamp(48px,10.5dvh,90px)} }
+  @media (max-height:560px){ .stage{height:clamp(40px,9dvh,64px)} p.sub{font-size:.7rem} }
+  @media (max-width:340px){ .msg{letter-spacing:.06em} }
+
+  /* Horizontal en celular: dos columnas */
+  @media (orientation:landscape) and (max-height:520px){
+    .card{width:min(880px,100%);padding:10px 22px}
+    .layout{display:grid;grid-template-columns:1fr 1fr;align-items:center;column-gap:30px;row-gap:6px}
+    .head{display:flex;flex-direction:column;align-items:center;gap:6px}
+    .ctrl{display:flex;flex-direction:column;align-items:center;gap:clamp(4px,1.2dvh,8px)}
+    .stage{height:clamp(54px,24dvh,100px)}
+    p.sub{display:block;font-size:.72rem}
+    .keys button{height:clamp(30px,8.4dvh,40px)}
+    .go-btn{height:clamp(34px,9dvh,44px)}
+    .code input{height:clamp(38px,11dvh,52px);width:clamp(36px,8vw,52px)}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="orbit"></div>
+<div class="planet"></div>
+<div class="moon"></div>
+
+<main class="card" id="card">
+  <div class="layout">
+    <section class="head">
+      <div class="tag"><i></i>Centro de control</div>
+
+      <div class="stage" id="stage">
+        <svg class="rocket" viewBox="0 0 100 170" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="body" x1="0" x2="1">
+              <stop offset="0" stop-color="#b9c4de"/><stop offset=".45" stop-color="#ffffff"/><stop offset="1" stop-color="#9aa8c9"/>
+            </linearGradient>
+            <linearGradient id="fin" x1="0" x2="1">
+              <stop offset="0" stop-color="#ff6a5e"/><stop offset="1" stop-color="#c2262e"/>
+            </linearGradient>
+            <radialGradient id="glass" cx=".35" cy=".3" r=".8">
+              <stop offset="0" stop-color="#d6f3ff"/><stop offset=".5" stop-color="#3aa0e8"/><stop offset="1" stop-color="#0b3a73"/>
+            </radialGradient>
+            <linearGradient id="fl" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#fff6c2"/><stop offset=".35" stop-color="#ffc233"/><stop offset=".75" stop-color="#ff6a1a"/><stop offset="1" stop-color="#ff2a00" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g class="flame">
+            <path d="M38 126 Q50 175 62 126 Z" fill="url(#fl)"/>
+            <path d="M44 126 Q50 158 56 126 Z" fill="#fffbe0" opacity=".9"/>
+          </g>
+          <path d="M30 88 L8 128 L8 140 L33 124 Z" fill="url(#fin)"/>
+          <path d="M70 88 L92 128 L92 140 L67 124 Z" fill="url(#fin)"/>
+          <path d="M46 100 L50 134 L54 100 Z" fill="#c2262e"/>
+          <path d="M50 6 C74 28 76 70 70 124 L30 124 C24 70 26 28 50 6 Z" fill="url(#body)" stroke="#7d8cb0" stroke-width="1"/>
+          <path d="M50 6 C60 15 66 26 68 38 L32 38 C34 26 40 15 50 6 Z" fill="url(#fin)"/>
+          <circle cx="50" cy="66" r="13" fill="#6a7aa0"/>
+          <circle cx="50" cy="66" r="10" fill="url(#glass)"/>
+          <path d="M44 61 Q47 58 51 59" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>
+          <rect x="29" y="96" width="42" height="5" fill="url(#fin)"/>
+          <rect x="29" y="106" width="42" height="2.5" fill="#7d8cb0" opacity=".6"/>
+          <path d="M38 124 L62 124 L58 132 L42 132 Z" fill="#4b5675"/>
+        </svg>
+      </div>
+
+      <h1>Clave final</h1>
+      <p class="sub">Ingresá los 5 dígitos para llegar a la final</p>
+    </section>
+
+    <section class="ctrl">
+      <div class="code" id="code">
+        <input inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" placeholder=" " aria-label="Dígito 1">
+        <input inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" placeholder=" " aria-label="Dígito 2">
+        <input inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" placeholder=" " aria-label="Dígito 3">
+        <input inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" placeholder=" " aria-label="Dígito 4">
+        <input inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" placeholder=" " aria-label="Dígito 5">
+      </div>
+
+      <div class="keys" id="keys"></div>
+      <button class="go-btn" id="check" type="button">VERIFICAR</button>
+      <div class="msg" id="msg" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+/* ---------- Estrellas con paralaje + estrellas fugaces ---------- */
+const cv = document.getElementById('stars'), cx = cv.getContext('2d');
+let W, H, stars = [], shooters = [];
+function resize(){
+  const d = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W*d; cv.height = H*d; cx.setTransform(d,0,0,d,0,0);
+  const n = Math.round(Math.min(220, Math.max(70, W*H/7000)));
+  stars = Array.from({length:n}, () => {
+    const z = Math.random();
+    return {x:Math.random()*W, y:Math.random()*H, r:z*1.5+.3, s:z*.35+.04, t:Math.random()*6};
+  });
+}
+addEventListener('resize', resize); resize();
+setInterval(() => {
+  if (shooters.length < 2 && !document.hidden)
+    shooters.push({x:Math.random()*W*.8+W*.2, y:Math.random()*H*.4, vx:-(6+Math.random()*5), vy:3+Math.random()*3, life:1});
+}, 2600);
+(function loop(){
+  cx.clearRect(0,0,W,H);
+  for (const s of stars){
+    s.t += .03; s.y += s.s; if (s.y > H){ s.y = -2; s.x = Math.random()*W; }
+    cx.globalAlpha = .45 + .55*Math.abs(Math.sin(s.t));
+    cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 6.283); cx.fill();
+  }
+  for (let i = shooters.length-1; i >= 0; i--){
+    const p = shooters[i]; p.x += p.vx; p.y += p.vy; p.life -= .014;
+    const g = cx.createLinearGradient(p.x, p.y, p.x - p.vx*7, p.y - p.vy*7);
+    g.addColorStop(0, 'rgba(255,255,255,'+Math.max(p.life,0)+')'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    cx.globalAlpha = 1; cx.strokeStyle = g; cx.lineWidth = 2;
+    cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(p.x - p.vx*7, p.y - p.vy*7); cx.stroke();
+    if (p.life <= 0) shooters.splice(i,1);
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ---------- Lógica de la clave ---------- */
+// Claves válidas guardadas codificadas (no aparecen en texto plano)
+const VALIDAS = ['MzYwNDk=', 'ODMzNTE='];
+
+const inputs = [...document.querySelectorAll('#code input')];
+const msg = document.getElementById('msg');
+const card = document.getElementById('card');
+const stage = document.getElementById('stage');
+const esTactil = matchMedia('(hover:none)').matches;
+
+// En celulares se usa el teclado propio: así el del sistema no tapa la pantalla
+if (esTactil) inputs.forEach(el => el.setAttribute('inputmode','none'));
+
+function clearState(){ msg.innerHTML = ''; msg.className = 'msg'; card.classList.remove('ok','bad'); }
+
+inputs.forEach((el, i) => {
+  el.addEventListener('input', () => {
+    el.value = el.value.replace(/\D/g,'').slice(-1);
+    clearState();
+    if (el.value && i < inputs.length-1) inputs[i+1].focus();
+  });
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !el.value && i > 0){ inputs[i-1].focus(); inputs[i-1].value=''; }
+    if (e.key === 'ArrowLeft' && i > 0) inputs[i-1].focus();
+    if (e.key === 'ArrowRight' && i < inputs.length-1) inputs[i+1].focus();
+    if (e.key === 'Enter') verificar();
+  });
+  el.addEventListener('focus', () => el.select());
+  el.addEventListener('paste', e => {
+    e.preventDefault();
+    const d = (e.clipboardData.getData('text') || '').replace(/\D/g,'').slice(0,5);
+    inputs.forEach((x,k) => x.value = d[k] || '');
+    clearState();
+  });
+});
+
+/* Teclado en pantalla */
+const keys = document.getElementById('keys');
+['1','2','3','4','5','6','7','8','9','⌫','0','C'].forEach(k => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = k;
+  if (k === '⌫' || k === 'C') b.className = 'util';
+  b.addEventListener('click', () => {
+    clearState();
+    if (k === '⌫'){
+      for (let i = inputs.length-1; i >= 0; i--) if (inputs[i].value){ inputs[i].value = ''; break; }
+    } else if (k === 'C'){ inputs.forEach(x => x.value = ''); }
+    else { const libre = inputs.find(x => !x.value); if (libre) libre.value = k; }
+  });
+  keys.appendChild(b);
+});
+
+function verificar(){
+  const ingresado = inputs.map(x => x.value).join('');
+  const correcto = ingresado.length === 5 && VALIDAS.includes(btoa(ingresado));
+  card.classList.remove('shake');
+  if (correcto){
+    msg.innerHTML = '✔ Correcto<small>Pasaste a la final</small>';
+    msg.className = 'msg ok'; card.classList.add('ok');
+    stage.classList.remove('back'); stage.classList.add('launch');
+    setTimeout(() => { stage.classList.remove('launch'); stage.classList.add('back'); }, 4200);
+  } else {
+    msg.innerHTML = '✘ Incorrecto';
+    msg.className = 'msg bad'; card.classList.add('bad');
+    void card.offsetWidth; card.classList.add('shake');
+  }
+}
+document.getElementById('check').addEventListener('click', verificar);
+if (!esTactil) inputs[0].focus();
+</script>
+</body>
+</html>
